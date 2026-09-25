@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>List do Mikołaja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0b1b2b;
+    --bg-mid:#0f2438;
+    --card-bg:#132c44;
+    --gold:#d9b26a;
+    --cream:#f3efe6;
+    --cream-dim:#c7cedb;
+    --berry:#b23a3a;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+    background:radial-gradient(ellipse at top, var(--bg-mid), var(--bg-deep) 70%);
+    color:var(--cream);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+  }
+
+  #snow-canvas{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    z-index:1;
+  }
+
+  main{
+    position:relative;
+    z-index:2;
+    max-width:1100px;
+    margin:0 auto;
+    padding:64px 24px 96px;
+    text-align:center;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(2.2rem, 5vw, 3.6rem);
+    letter-spacing:0.01em;
+    margin:0 0 20px;
+    color:var(--cream);
+  }
+
+  h1 .dot{
+    color:var(--gold);
+  }
+
+  #opis{
+    max-width:600px;
+    margin:0 auto 56px;
+    font-size:1.05rem;
+    line-height:1.7;
+    color:var(--cream-dim);
+  }
+
+  /* ===== siatka kart ===== */
+  #grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:22px;
+    text-align:left;
+  }
+
+  .card{
+    background:linear-gradient(160deg, var(--card-bg), #0e2033);
+    border:1px solid rgba(217,178,106,0.18);
+    border-radius:22px;
+    padding:18px;
+    cursor:pointer;
+    transition:transform 0.25s ease, border-color 0.25s ease;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .card:hover, .card:focus-visible{
+    transform:translateY(-4px);
+    border-color:rgba(217,178,106,0.55);
+    outline:none;
+  }
+
+  .card .thumb{
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:16px;
+    overflow:hidden;
+    background:#0a1826;
+  }
+
+  .card .thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .card .name{
+    font-family:'Fraunces', serif;
+    font-size:1.05rem;
+    font-weight:600;
+    color:var(--cream);
+  }
+
+  .card .desc{
+    font-size:0.88rem;
+    line-height:1.5;
+    color:var(--cream-dim);
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
+  /* ===== modal ===== */
+  #overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(5,12,20,0.72);
+    backdrop-filter:blur(4px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:10;
+    padding:20px;
+  }
+
+  #overlay.open{
+    display:flex;
+  }
+
+  #modal{
+    position:relative;
+    background:linear-gradient(160deg, #16324c, #0d2135);
+    border:1px solid rgba(217,178,106,0.3);
+    border-radius:24px;
+    max-width:480px;
+    width:100%;
+    padding:28px;
+  }
+
+  #modal .close{
+    position:absolute;
+    top:16px;
+    right:18px;
+    background:none;
+    border:none;
+    color:var(--cream-dim);
+    font-size:1.4rem;
+    line-height:1;
+    cursor:pointer;
+    transition:color 0.2s ease;
+  }
+
+  #modal .close:hover{
+    color:var(--berry);
+  }
+
+  #modal .top-row{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px;
+    padding-right:24px;
+  }
+
+  #modal .top-row img{
+    width:64px;
+    height:64px;
+    border-radius:12px;
+    object-fit:cover;
+    flex-shrink:0;
+    background:#0a1826;
+  }
+
+  #modal .top-row h2{
+    font-family:'Fraunces', serif;
+    font-size:1.3rem;
+    font-weight:600;
+    margin:0;
+    color:var(--cream);
+  }
+
+  #modal .full-desc{
+    font-size:0.95rem;
+    line-height:1.7;
+    color:var(--cream-dim);
+    margin-bottom:20px;
+  }
+
+  #modal a.link{
+    display:inline-block;
+    color:var(--bg-deep);
+    background:var(--gold);
+    padding:10px 20px;
+    border-radius:999px;
+    text-decoration:none;
+    font-weight:500;
+    font-size:0.9rem;
+    transition:opacity 0.2s ease;
+  }
+
+  #modal a.link:hover{
+    opacity:0.85;
+  }
+
+  @media (max-width:480px){
+    main{padding:44px 16px 72px;}
+    #grid{grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="snow-canvas"></canvas>
+
+<main>
+  <h1>List do Mikołaja<span class="dot">.</span></h1>
+
+  <p id="opis">
+    Mikołaju, w tym roku znowu byłem grzeczny (prawie) zawsze. Poniżej
+    znajdziesz listę rzeczy, które sprawiłyby mi ogromną radość pod choinką.
+  </p>
+
+  <div id="grid"></div>
+</main>
+
+<div id="overlay">
+  <div id="modal">
+    <button class="close" aria-label="Zamknij">✕</button>
+    <div class="top-row">
+      <img id="modal-img" src="" alt="">
+      <h2 id="modal-name"></h2>
+    </div>
+    <p class="full-desc" id="modal-desc"></p>
+    <a class="link" id="modal-link" href="#" target="_blank" rel="noopener">Zobacz produkt →</a>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   LISTA PREZENTÓW — EDYTUJ TUTAJ
+   Żeby dodać nowy przedmiot, skopiuj cały blok { ... } i wklej go
+   jako kolejny element tablicy (pamiętaj o przecinku między blokami).
+   Żeby usunąć przedmiot, po prostu usuń jego blok.
+
+   img   -> link do zdjęcia (może być zwykły URL z internetu)
+   name  -> nazwa przedmiotu (pokazana na kwadraciku i w okienku)
+   short -> krótki opis widoczny na kwadraciku
+   full  -> dłuższy opis widoczny po kliknięciu w okienku
+   link  -> link do sklepu / strony produktu
+===================================================================== */
+const ITEMS = [
+  {
+    img: "https://cdn.shopify.com/s/files/1/0045/4092/4007/files/NhCBVLijW2sQ3c4K_365d9723-8222-46be-8160-31cec7c50244.jpg?v=1788368294&width=800",
+    name: "IFIXIT Pro Tech Toolkit",
+    short: "Mały zestaw naprawczy do elektroniki i innych.",
+    full: "Ten zestaw naprawczy jest bardzo przydatnym narzędziem w domu. Za jego pomocą można naprawić elektronikę, zabawki itp.",
+    link: "https://www.mediaexpert.pl/komputery-i-tablety/akcesoria-komputerowe/narzedzia-do-naprawy-komputerow/ifixit-pro-tech-toolkit"
+  },
+  {
+    img: "https://prod-api.mediaexpert.pl/api/images/gallery_500_500/thumbnails/images/80/8055739/Sluchawki-dokanalowe-SAMSUNG-Buds-3-FE-ANC-Czarny-1.jpg",
+    name: "SAMSUNG Buds 3 FE",
+    short: "Sluchawki douszne do słuchania muzyki.",
+    full: "Słuchawki samsung buds 3 FE są dobrymi i jakościowymi słuchawkami do muzyki i filmów",
+    link: "https://www.mediaexpert.pl/telewizory-i-rtv/sluchawki/wszystkie-sluchawki/sluchawki-dokanalowe-samsung-buds-3-fe-anc-czarny"
+  },
+  {
+    img: "https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=600&auto=format&fit=crop",
+    name: "placeholder",
+    short: "placeholder",
+    full: "placeholder",
+    link: "https://example.com"
+  }
+];
+
+/* ---------- renderowanie kart ---------- */
+const grid = document.getElementById('grid');
+
+ITEMS.forEach((item, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.tabIndex = 0;
+  card.innerHTML = `
+    <div class="thumb"><img src="${item.img}" alt="${item.name}" loading="lazy"></div>
+    <div class="name">${item.name}</div>
+    <div class="desc">${item.short}</div>
+  `;
+  card.addEventListener('click', () => openModal(i));
+  card.addEventListener('keydown', e => { if (e.key === 'Enter') openModal(i); });
+  grid.appendChild(card);
+});
+
+/* ---------- modal ---------- */
+const overlay = document.getElementById('overlay');
+const modalImg = document.getElementById('modal-img');
+const modalName = document.getElementById('modal-name');
+const modalDesc = document.getElementById('modal-desc');
+const modalLink = document.getElementById('modal-link');
+
+function openModal(i){
+  const item = ITEMS[i];
+  modalImg.src = item.img;
+  modalImg.alt = item.name;
+  modalName.textContent = item.name;
+  modalDesc.textContent = item.full;
+  modalLink.href = item.link;
+  overlay.classList.add('open');
+}
+
+function closeModal(){
+  overlay.classList.remove('open');
+}
+
+document.querySelector('#modal .close').addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ---------- efekt padającego śniegu ---------- */
+const canvas = document.getElementById('snow-canvas');
+const ctx = canvas.getContext('2d');
+let w, h, flakes;
+
+function resize(){
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+function makeFlakes(count){
+  return Array.from({length: count}, () => ({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    r: Math.random() * 2.2 + 0.8,
+    speed: Math.random() * 0.6 + 0.3,
+    drift: Math.random() * 0.6 - 0.3,
+    opacity: Math.random() * 0.5 + 0.3
+  }));
+}
+flakes = makeFlakes(window.innerWidth < 600 ? 60 : 120);
+
+function tick(){
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#f3efe6';
+  flakes.forEach(f => {
+    ctx.globalAlpha = f.opacity;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    ctx.fill();
+    f.y += f.speed;
+    f.x += f.drift;
+    if (f.y > h) { f.y = -5; f.x = Math.random() * w; }
+    if (f.x > w) f.x = 0;
+    if (f.x < 0) f.x = w;
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+
+</body>
+</html>
