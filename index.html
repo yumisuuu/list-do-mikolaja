@@ -202,6 +202,42 @@
     margin-bottom:20px;
   }
 
+  #modal .actions{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  #modal a.search{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:var(--cream);
+    background:transparent;
+    border:1px solid rgba(217,178,106,0.45);
+    padding:9px 18px;
+    border-radius:999px;
+    text-decoration:none;
+    font-weight:500;
+    font-size:0.85rem;
+    margin-left:auto;
+    transition:background 0.2s ease, border-color 0.2s ease;
+  }
+
+  #modal a.search:hover, #modal a.search:focus-visible{
+    background:rgba(217,178,106,0.14);
+    border-color:var(--gold);
+    outline:none;
+  }
+
+  #modal a.search svg{
+    width:15px;
+    height:15px;
+    flex-shrink:0;
+  }
+
   #modal a.link{
     display:inline-block;
     color:var(--bg-deep);
@@ -247,7 +283,13 @@
       <h2 id="modal-name"></h2>
     </div>
     <p class="full-desc" id="modal-desc"></p>
-    <a class="link" id="modal-link" href="#" target="_blank" rel="noopener">Zobacz produkt →</a>
+    <div class="actions">
+      <a class="link" id="modal-link" href="#" target="_blank" rel="noopener">Zobacz produkt →</a>
+      <a class="search" id="modal-search" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        Szukaj w Google
+      </a>
+    </div>
   </div>
 </div>
 
@@ -263,6 +305,8 @@
    short -> krótki opis widoczny na kwadraciku
    full  -> dłuższy opis widoczny po kliknięciu w okienku
    link  -> link do sklepu / strony produktu
+   search -> fraza wyszukiwana w Google po kliknięciu "Szukaj w Google"
+              (jeśli pominiesz, użyta zostanie nazwa przedmiotu)
 ===================================================================== */
 const ITEMS = [
   {
@@ -270,28 +314,32 @@ const ITEMS = [
     name: "IFIXIT Pro Tech Toolkit",
     short: "Mały zestaw naprawczy do elektroniki i innych.",
     full: "Ten zestaw naprawczy jest bardzo przydatnym narzędziem w domu. Za jego pomocą można naprawić elektronikę, zabawki itp.",
-    link: "https://www.mediaexpert.pl/komputery-i-tablety/akcesoria-komputerowe/narzedzia-do-naprawy-komputerow/ifixit-pro-tech-toolkit"
+    link: "https://www.mediaexpert.pl/komputery-i-tablety/akcesoria-komputerowe/narzedzia-do-naprawy-komputerow/ifixit-pro-tech-toolkit",
+    search: "iFixit Pro Tech Toolkit"
   },
   {
     img: "https://prod-api.mediaexpert.pl/api/images/gallery_500_500/thumbnails/images/39/3993574/Obudowa-KRUX-Vako-front.jpg",
     name: "Obudowa Krux Vako",
     short: "Obudowa do komputera",
     full: "Ta obudowa to male pudelko z oknem na zawiasie ktory idealnie rozwiaze problem zajmujacego miejsca mojej terazniejszej obudowy oraz otworzy mozliwosc ulepszenia komputera w przyszlosci.",
-    link: "https://www.mediaexpert.pl/komputery-i-tablety/podzespoly-komputerowe/obudowy/obudowa-krux-vako"
+    link: "https://www.mediaexpert.pl/komputery-i-tablety/podzespoly-komputerowe/obudowy/obudowa-krux-vako",
+    search: "Obudowa Krux Vako"
   },
   {
     img: "https://prod-api.mediaexpert.pl/api/images/gallery_500_500/thumbnails/images/81/8181277/Sluchawki-nauszne-JBL-Tune-780-NC-Czarny-1.jpg",
     name: "JBL Tune 780NC",
     short: "Słuchawki nauszne JBL",
     full: "Te słuchawki to dobry balans między ceną, jakością i wykonaniem. Do 76h pracy na baterii i redukcja szumów to tylko dwie z ich zalet.",
-    link: "https://www.mediaexpert.pl/telewizory-i-rtv/sluchawki/wszystkie-sluchawki/sluchawki-nauszne-jbl-tune-780nc-czarny"
+    link: "https://www.mediaexpert.pl/telewizory-i-rtv/sluchawki/wszystkie-sluchawki/sluchawki-nauszne-jbl-tune-780nc-czarny",
+    search: "JBL Tune 780NC"
   },
   {
     img: "https://cdn1.botland.com.pl/121220-large_default/raspberry-pi-active-cooler-aktywne-chlodzenie-radiator-wentylator-do-raspberry-pi-5.jpg",
     name: "Raspberry Pi Active Cooler",
     short: "Aktywne chłodzenie do Raspberry Pi",
     full: "Aktywne chłodzenie do Raspberry Pi 5 które otworzy możliwość większego podkręcenia i szybkości.",
-    link: "https://botland.com.pl/elementy-montazowe-raspberry-pi-5/23925-raspberry-pi-active-cooler-aktywne-chlodzenie-radiator-wentylator-do-raspberry-pi-5-5056561803357.html"
+    link: "https://botland.com.pl/elementy-montazowe-raspberry-pi-5/23925-raspberry-pi-active-cooler-aktywne-chlodzenie-radiator-wentylator-do-raspberry-pi-5-5056561803357.html",
+    search: "Raspberry Pi 5 Active Cooler"
   }
 ];
 
@@ -318,6 +366,7 @@ const modalImg = document.getElementById('modal-img');
 const modalName = document.getElementById('modal-name');
 const modalDesc = document.getElementById('modal-desc');
 const modalLink = document.getElementById('modal-link');
+const modalSearch = document.getElementById('modal-search');
 
 function openModal(i){
   const item = ITEMS[i];
@@ -326,6 +375,7 @@ function openModal(i){
   modalName.textContent = item.name;
   modalDesc.textContent = item.full;
   modalLink.href = item.link;
+  modalSearch.href = 'https://www.google.com/search?q=' + encodeURIComponent(item.search || item.name);
   overlay.classList.add('open');
 }
 
